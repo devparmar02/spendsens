@@ -1,10 +1,12 @@
 import { Response } from "express";
+import { Types } from "mongoose";
 import { AuthRequest } from "@/middleware/auth";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { Category } from "@/models/Category";
 import { Transaction } from "@/models/Transaction";
 import { Budget } from "@/models/Budget";
 import { ApiError } from "@/utils/ApiError";
+import { buildDefaultCategories } from "@/utils/defaultCategories";
 
 export const create = asyncHandler(async (req: AuthRequest, res: Response) => {
   const category = await Category.create({ ...req.body, userId: req.userId, isDefault: false });
@@ -14,7 +16,13 @@ export const create = asyncHandler(async (req: AuthRequest, res: Response) => {
 export const list = asyncHandler(async (req: AuthRequest, res: Response) => {
   const filter: Record<string, any> = { userId: req.userId };
   if (req.query.type) filter.type = req.query.type;
-  const categories = await Category.find(filter).sort({ name: 1 });
+  let categories = await Category.find(filter).sort({ name: 1 });
+
+  if (categories.length === 0 && !req.query.type) {
+    await Category.insertMany(buildDefaultCategories(new Types.ObjectId(req.userId)));
+    categories = await Category.find(filter).sort({ name: 1 });
+  }
+
   res.status(200).json({ success: true, data: categories });
 });
 

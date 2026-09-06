@@ -38,6 +38,7 @@ export const AddTransactionModal = ({ onClose, onSaved, editing }: AddTransactio
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
@@ -50,7 +51,12 @@ export const AddTransactionModal = ({ onClose, onSaved, editing }: AddTransactio
 
   useEffect(() => {
     if (type === "transfer") return;
-    categoryService.list(type).then((res) => setCategories(res.data.data));
+    setCategoriesLoading(true);
+    categoryService
+      .list(type)
+      .then((res) => setCategories(res.data.data))
+      .catch((err) => setError(getErrorMessage(err)))
+      .finally(() => setCategoriesLoading(false));
   }, [type]);
 
   const scanReceipt = async (file?: File) => {
@@ -205,7 +211,9 @@ export const AddTransactionModal = ({ onClose, onSaved, editing }: AddTransactio
                 onChange={(e) => setAccountId(e.target.value)}
                 className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-emerald"
               >
-                <option value="">Select</option>
+                <option value="">
+                  {categoriesLoading ? "Loading..." : categories.length ? "Select" : "No categories"}
+                </option>
                 {accounts.map((a) => (
                   <option key={a._id} value={a._id}>
                     {a.name}
