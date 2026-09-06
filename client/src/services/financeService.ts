@@ -1,5 +1,5 @@
 import { api } from "@/services/api";
-import type { Account, Category, PaginatedResponse, Transaction } from "@/types";
+import type { Account, Category, PaginatedResponse, PaymentMethod, Transaction } from "@/types";
 
 export interface TransactionFilters {
   page?: number;
@@ -45,4 +45,15 @@ export const categoryService = {
   update: (id: string, data: Partial<Category>) =>
     api.patch<{ data: Category }>(`/categories/${id}`, data),
   remove: (id: string) => api.delete(`/categories/${id}`),
+};
+
+export const aiService = {
+  scanReceipt: (file: File) => {
+    const formData = new FormData();
+    formData.append("receipt", file);
+    return api.post<{
+      success: boolean;
+      data: { title: string; amount: number; date?: string; paymentMethod?: PaymentMethod; notes?: string };
+    }>("/ai/scan-receipt", formData);
+  },
 };

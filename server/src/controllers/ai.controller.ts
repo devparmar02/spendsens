@@ -6,6 +6,8 @@ import {
   getConversationHistory,
   clearConversation,
 } from "@/services/ai.service";
+import { scanReceipt as scanReceiptImage } from "@/services/receipt.service";
+import { ApiError } from "@/utils/ApiError";
 
 export const ask = asyncHandler(async (req: AuthRequest, res: Response) => {
   const result = await askFinancialAssistant(req.userId!, req.body.message);
@@ -20,4 +22,10 @@ export const history = asyncHandler(async (req: AuthRequest, res: Response) => {
 export const reset = asyncHandler(async (req: AuthRequest, res: Response) => {
   await clearConversation(req.userId!);
   res.status(200).json({ success: true, message: "Conversation cleared" });
+});
+
+export const scanReceipt = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.file) throw new ApiError(400, "Receipt image is required");
+  const data = await scanReceiptImage(req.file.buffer, req.file.mimetype);
+  res.status(200).json({ success: true, data });
 });

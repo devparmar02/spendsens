@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import { accountService, categoryService, transactionService } from "@/services/financeService";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, ScanLine, X } from "lucide-react";
+import { accountService, aiService, categoryService, transactionService } from "@/services/financeService";
 import type { Account, Category, PaymentMethod, Transaction, TransactionType } from "@/types";
 import { useToastStore } from "@/store/toastStore";
 import { getErrorMessage } from "@/services/api";
@@ -39,7 +39,9 @@ export const AddTransactionModal = ({ onClose, onSaved, editing }: AddTransactio
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
+  const receiptInputRef = useRef<HTMLInputElement>(null);
   const push = useToastStore((s) => s.push);
 
   useEffect(() => {
@@ -50,6 +52,27 @@ export const AddTransactionModal = ({ onClose, onSaved, editing }: AddTransactio
     if (type === "transfer") return;
     categoryService.list(type).then((res) => setCategories(res.data.data));
   }, [type]);
+
+  const scanReceipt = async (file?: File) => {
+    if (!file) return;
+    setError("");
+    setScanning(true);
+    try {
+      const result = await aiService.scanReceipt(file);
+      const receipt = result.data.data;
+      setTitle(receipt.title);
+      setAmount(String(receipt.amount));
+      if (receipt.date) setDate(receipt.date);
+      if (receipt.paymentMethod) setPaymentMethod(receipt.paymentMethod);
+      if (receipt.notes) setNotes(receipt.notes);
+      push("Receipt scanned. Review the details before saving.", "success");
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setScanning(false);
+      if (receiptInputRef.current) receiptInputRef.current.value = "";
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,9 +122,32 @@ export const AddTransactionModal = ({ onClose, onSaved, editing }: AddTransactio
       <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-line bg-paper p-5 sm:rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-xl">{editing ? "Edit transaction" : "Add transaction"}</h2>
-          <button onClick={onClose} className="text-muted hover:text-ink">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-3">
+            {!editing && (
+              <>
+                <input
+                  ref={receiptInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => scanReceipt(e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => receiptInputRef.current?.click()}
+                  disabled={scanning}
+                  title="Scan receipt"
+                  className="flex items-center gap-1.5 text-sm text-emerald hover:opacity-75 disabled:opacity-60"
+                >
+                  {scanning ? <Loader2 size={16} className="animate-spin" /> : <ScanLine size={16} />}
+                  {scanning ? "Scanning..." : "Scan receipt"}
+                </button>
+              </>
+            )}
+            <button type="button" onClick={onClose} className="text-muted hover:text-ink" aria-label="Close">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="mb-4 flex rounded-lg border border-line p-1">
