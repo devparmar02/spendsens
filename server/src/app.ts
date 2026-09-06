@@ -39,6 +39,13 @@ if (env.nodeEnv !== "test") {
   app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
 }
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "SpendSense API is running 🚀",
+  });
+});
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({ success: true, message: "SpendSense API is running" });
 });
