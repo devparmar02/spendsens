@@ -14,6 +14,7 @@ import {
   Search,
   Moon,
   Sun,
+  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/utils/format";
 import { useUIStore } from "@/store/uiStore";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_NAV = NAV_ITEMS.slice(0, 5);
+const MOBILE_MORE = NAV_ITEMS.slice(5);
 
 export const AppLayout = () => {
   const { sidebarCollapsed, toggleSidebar, theme, toggleTheme } = useUIStore();
@@ -42,6 +44,7 @@ export const AppLayout = () => {
   const navigate = useNavigate();
   const [showAddTx, setShowAddTx] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showMobileMore, setShowMobileMore] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -124,7 +127,7 @@ export const AppLayout = () => {
         </aside>
 
         {/* Main content */}
-        <div className="min-h-screen flex-1 pb-20 md:pb-0">
+        <div className="min-h-screen flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
           <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-paper/90 px-4 py-3 backdrop-blur md:px-8">
             <div className="md:hidden font-display text-lg">SpendSense</div>
             <div className="hidden md:block text-sm text-muted">
@@ -169,8 +172,45 @@ export const AppLayout = () => {
         </div>
       </div>
 
+      {/* Mobile overflow navigation */}
+      {showMobileMore && (
+        <div className="fixed bottom-[4.25rem] right-3 z-40 w-52 rounded-xl border border-line bg-paper p-2 shadow-xl md:hidden">
+          {MOBILE_MORE.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={() => setShowMobileMore(false)}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-3 text-sm",
+                  isActive ? "bg-emerald-soft text-emerald font-medium" : "text-ink/70"
+                )
+              }
+            >
+              <item.icon size={18} />
+              {item.label}
+            </NavLink>
+          ))}
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm text-ink/70"
+          >
+            {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+            {theme === "light" ? "Dark mode" : "Light mode"}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm text-ink/70"
+          >
+            <LogOut size={18} />
+            Log out
+          </button>
+        </div>
+      )}
+
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-line bg-paper/95 py-2 backdrop-blur md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-line bg-paper/95 px-1 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur md:hidden">
         {MOBILE_NAV.map((item) => (
           <NavLink
             key={item.to}
@@ -187,6 +227,19 @@ export const AppLayout = () => {
             {item.label.split(" ")[0]}
           </NavLink>
         ))}
+        <button
+          type="button"
+          onClick={() => setShowMobileMore((visible) => !visible)}
+          className={cn(
+            "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1 text-[11px]",
+            showMobileMore ? "text-emerald" : "text-muted"
+          )}
+          aria-label="More navigation options"
+          aria-expanded={showMobileMore}
+        >
+          <MoreHorizontal size={20} />
+          More
+        </button>
       </nav>
 
       {/* Mobile floating action button */}
