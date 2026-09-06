@@ -1,6 +1,7 @@
 import { getGroqClient } from "@/config/groq";
 import { env } from "@/config/env";
 import { ApiError } from "@/utils/ApiError";
+import { createWorker } from "tesseract.js";
 
 export interface ReceiptDraft {
   title: string;
@@ -10,7 +11,7 @@ export interface ReceiptDraft {
   notes?: string;
 }
 
-const RECEIPT_PROMPT = `Extract the receipt into JSON only. Do not use markdown or code fences.
+const RECEIPT_PROMPT = `Extract the receipt text below into JSON only. Do not use markdown or code fences.
 Return exactly these keys: title, amount, date, paymentMethod, notes.
 title: the merchant or a short purchase description.
 amount: the final total as a number, not a string.
@@ -19,19 +20,29 @@ paymentMethod: one of cash, upi, credit_card, debit_card, bank_transfer, or null
 notes: useful receipt details such as receipt number, otherwise null.
 If the image is not a receipt or the total is unreadable, return {"error":"Unable to read receipt"}.`;
 
-export const scanReceipt = async (buffer: Buffer, mimeType: string): Promise<ReceiptDraft> => {
+export const scanReceipt = async (buffer: Buffer, _mimeType: string): Promise<ReceiptDraft> => {
+  const worker = await createWorker("eng");
+  let receiptText = "";
+  try {
+    const result = await worker.recognize(buffer);
+    receiptText = result.data.text.trim();
+  } finally {
+    await worker.terminate();
+  }
+
+  if (!receiptText) {
+    throw new ApiError(422, "Unable to read this receipt. Try a clearer image.");
+  }
+
   const groq = getGroqClient();
   const completion = await groq.chat.completions.create({
-    model: env.groqVisionModel,
+    model: env.groqModel,
     messages: [
       {
         role: "user",
-        content: [
-          { type: "text", text: RECEIPT_PROMPT },
-          { type: "image_url", image_url: { url: `data:${mimeType};base64,${buffer.toString("base64")}` } },
-        ],
+        content: `${RECEIPT_PROMPT}\n\nReceipt text:\n${receiptText.slice(0, 12000)}`,
       },
-    ] as any,
+    ],
     temperature: 0,
     max_tokens: 300,
   });

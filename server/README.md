@@ -52,7 +52,8 @@ successfully once pointed at a real MongoDB URI.
   to Groq, with a system prompt that forbids inventing data and forbids
   investment advice. Conversation history is stored in MongoDB per user.
 - **Receipt scanning** — authenticated users can upload a JPG, PNG, or WebP
-  receipt up to 8 MB. Groq vision extracts a transaction draft for review;
+  receipt up to 8 MB. Local OCR extracts the receipt text, then the configured
+  Groq text model turns it into a transaction draft for review;
   the transaction is only created after the user confirms it in the frontend.
 - **Reports** — monthly, yearly, or custom date range; JSON summary endpoint
   plus a CSV export endpoint. (PDF export isn't built yet — flag it if you
