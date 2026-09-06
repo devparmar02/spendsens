@@ -18,5 +18,5 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   groqApiKey: process.env.GROQ_API_KEY || "",
   groqModel: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
-  clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  clientUrl: (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, ""),
 };

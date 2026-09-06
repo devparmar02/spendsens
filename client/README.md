@@ -21,6 +21,9 @@ npm run dev
 The dev server proxies `/api` to `http://localhost:8080` (see `vite.config.ts`),
 so run the backend alongside it.
 
+For a deployed frontend, set `VITE_API_URL` to the backend API origin, for
+example `https://spendsens.onrender.com/api`, before building and redeploying.
+
 ## What's built
 
 - **Auth** — login/register matching the simplified `userId` + password backend
