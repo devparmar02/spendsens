@@ -11,14 +11,16 @@ export interface ReceiptDraft {
   notes?: string;
 }
 
-const RECEIPT_PROMPT = `Extract the receipt text below into JSON only. Do not use markdown or code fences.
+const RECEIPT_PROMPT = `You are a careful receipt-to-transaction parser. Extract the receipt text below into JSON only. Do not use markdown or code fences.
+
 Return exactly these keys: title, amount, date, paymentMethod, notes.
-title: the merchant or a short purchase description.
-amount: the final total as a number, not a string.
-date: ISO date YYYY-MM-DD when visible, otherwise null.
-paymentMethod: one of cash, upi, credit_card, debit_card, bank_transfer, or null.
-notes: useful receipt details such as receipt number, otherwise null.
-If the image is not a receipt or the total is unreadable, return {"error":"Unable to read receipt"}.`;
+- title: merchant/store name. Remove slogans, addresses, phone numbers, tax IDs, and receipt labels. If no merchant is visible, use "Receipt purchase".
+- amount: the final amount actually paid, as a number, not a string. Prefer the value beside TOTAL, GRAND TOTAL, AMOUNT PAID, NET TOTAL, or BALANCE PAID. Do not use subtotal, tax, discount, change, invoice number, date, phone number, or item prices. Handle comma/period decimal formats and currency symbols.
+- date: purchase date as ISO YYYY-MM-DD. Convert DD/MM/YYYY and DD-MM-YYYY when unambiguous. Use null if missing or ambiguous.
+- paymentMethod: normalize to exactly one of cash, upi, credit_card, debit_card, bank_transfer, or null. Map Visa/Mastercard/card to credit_card unless debit is explicit. Map QR/PhonePe/Paytm/GPay/UPI to upi.
+- notes: short useful details such as receipt number or tax amount, otherwise null. Never include the full OCR text.
+
+OCR may contain misspellings and duplicated lines. Reason across nearby lines and do not invent values. If this is not a receipt or no final paid amount can be identified, return {"error":"Unable to read receipt"}.`;
 
 export const scanReceipt = async (buffer: Buffer, _mimeType: string): Promise<ReceiptDraft> => {
   const worker = await createWorker("eng");

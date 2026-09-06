@@ -21,21 +21,37 @@ export const DashboardPage = () => {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([
-      analyticsService.dashboard(),
-      insightsService.list(),
-      transactionService.list({ limit: 5, sortBy: "date", sortOrder: "desc" }),
-    ])
-      .then(([dashRes, insightsRes, txRes]) => {
+    const load = async () => {
+      try {
+        const [dashRes, insightsRes, txRes] = await Promise.all([
+          analyticsService.dashboard(),
+          insightsService.list(),
+          transactionService.list({ limit: 5, sortBy: "date", sortOrder: "desc" }),
+        ]);
         if (!mounted) return;
         setData(dashRes.data.data);
         setInsights(insightsRes.data.data);
         setRecent(txRes.data.items);
-      })
-      .catch((err) => mounted && setError(getErrorMessage(err)))
-      .finally(() => mounted && setLoading(false));
+        setError("");
+      } catch (err) {
+        if (mounted) setError(getErrorMessage(err));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    const refresh = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    void load();
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("spendsense:data-changed", refresh);
     return () => {
       mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("spendsense:data-changed", refresh);
     };
   }, []);
 

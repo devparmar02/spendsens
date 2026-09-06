@@ -65,6 +65,20 @@ export const TransactionsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("spendsense:data-changed", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("spendsense:data-changed", refresh);
+    };
+  }, []);
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
@@ -211,9 +225,9 @@ export const TransactionsPage = () => {
         </div>
       )}
 
-      {adding && <AddTransactionModal onClose={() => setAdding(false)} onSaved={load} />}
+      {adding && <AddTransactionModal onClose={() => setAdding(false)} />}
       {editing && (
-        <AddTransactionModal editing={editing} onClose={() => setEditing(null)} onSaved={load} />
+        <AddTransactionModal editing={editing} onClose={() => setEditing(null)} />
       )}
       <ConfirmDialog
         open={!!deleteTarget}

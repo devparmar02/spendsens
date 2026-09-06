@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/store/authStore";
 import { getErrorMessage } from "@/services/api";
@@ -10,7 +10,11 @@ export const LoginPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const token = useAuthStore((s) => s.token);
+  const hydrated = useAuthStore((s) => s.hydrated);
   const navigate = useNavigate();
+
+  if (hydrated && token) return <Navigate to="/app" replace />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -158,7 +158,7 @@ export const AppLayout = () => {
               <NotificationsPanel />
               <button
                 onClick={() => setShowAddTx(true)}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald px-3.5 py-2 text-sm font-medium text-white hover:opacity-90"
+                className="hidden items-center gap-1.5 rounded-lg bg-emerald px-3.5 py-2 text-sm font-medium text-white hover:opacity-90 md:flex"
               >
                 <Plus size={16} />
                 <span className="hidden sm:inline">Add transaction</span>
@@ -166,7 +166,7 @@ export const AppLayout = () => {
             </div>
           </header>
 
-          <main className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+          <main className="mx-auto max-w-6xl px-4 py-5 md:px-8 md:py-6">
             <Outlet />
           </main>
         </div>

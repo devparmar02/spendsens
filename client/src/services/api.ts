@@ -17,7 +17,12 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (res.config.method && ["post", "patch", "put", "delete"].includes(res.config.method)) {
+      window.dispatchEvent(new CustomEvent("spendsense:data-changed"));
+    }
+    return res;
+  },
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().clearAuth();
